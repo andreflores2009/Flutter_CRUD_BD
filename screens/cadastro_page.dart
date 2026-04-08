@@ -50,7 +50,7 @@ class _CadastroPageState extends State<CadastroPage> {
 
           // Coluna vertical com os widgets de entrada e botões
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start, // Alinha à esquerda
+            crossAxisAlignment: CrossAxisAlignment.stretch, // Altera o alinhamento para esticar os botões na largura total
 
             children: [
               // Campo de entrada de texto para o nome do cliente
@@ -70,6 +70,7 @@ class _CadastroPageState extends State<CadastroPage> {
               TextFormField(
                 controller: _cpfController, // Liga ao controlador do CPF
                 decoration: InputDecoration(labelText: 'CPF'), // Rótulo do campo
+                keyboardType: TextInputType.number, // Define o teclado como numérico para facilitar o preenchimento
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Informe o CPF';
@@ -82,6 +83,7 @@ class _CadastroPageState extends State<CadastroPage> {
               TextFormField(
                 controller: _telefoneController, // Liga ao controlador do telefone
                 decoration: InputDecoration(labelText: 'Telefone'), // Rótulo
+                keyboardType: TextInputType.phone, // Define o teclado para padrão de telefone
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Informe o telefone';
@@ -91,18 +93,22 @@ class _CadastroPageState extends State<CadastroPage> {
               ),
 
               // Espaçamento vertical entre os campos e o botão
-              const SizedBox(height: 20),
+              const SizedBox(height: 30), // Aumentado o espaço para 30 pixels para melhor visualização
 
               // Botão de salvar cliente no banco
               ElevatedButton(
+                // Define um estilo para o botão de salvar
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 15), // Adiciona preenchimento vertical interno no botão
+                ),
                 // Ação executada ao pressionar o botão
                 onPressed: () async {
                   // Valida todos os campos do formulário
                   if (_formKey.currentState!.validate()) {
                     // Cria um objeto do tipo ClientesCompanion com os valores digitados
                     final cliente = ClientesCompanion(
-                      nome: drift.Value(_nomeController.text),        // Nome digitado
-                      cpf: drift.Value(_cpfController.text),          // CPF digitado
+                      nome: drift.Value(_nomeController.text),         // Nome digitado
+                      cpf: drift.Value(_cpfController.text),           // CPF digitado
                       telefone: drift.Value(_telefoneController.text), // Telefone digitado
                     );
 
@@ -121,20 +127,25 @@ class _CadastroPageState extends State<CadastroPage> {
                   }
                 },
                 // Texto exibido no botão
-                child: Text('Salvar'),
+                child: Text('SALVAR CLIENTE'), // Texto em caixa alta para destaque
               ),
 
               // Espaço entre os dois botões
-              const SizedBox(height: 10),
+              const SizedBox(height: 12), // Espaço de 12 pixels entre os botões principais
 
-              // Botão de texto para navegar até a tela de listagem de clientes
-              TextButton(
+              // Botão com borda para navegar até a tela de listagem de clientes (Substituindo o antigo TextButton)
+              OutlinedButton(
+                // Define um estilo para o botão de contorno
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 15), // Adiciona preenchimento vertical interno
+                  side: BorderSide(color: Colors.blue), // Define a cor da borda do botão
+                ),
                 onPressed: () {
                   // Usa o Navigator para ir para a rota '/listar'
                   Navigator.pushNamed(context, '/listar');
                 },
-                // Texto do botão de navegação
-                child: Text('Ver lista de clientes'),
+                // Texto do botão de navegação agora dentro de um botão visível
+                child: Text('VER LISTA DE CLIENTES'), // Texto em destaque
               ),
             ],
           ),
