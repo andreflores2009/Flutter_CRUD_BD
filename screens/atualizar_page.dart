@@ -1,5 +1,6 @@
-// Importa pacotes necessários
+// Importa os pacotes fundamentais do Flutter para a interface
 import 'package:flutter/material.dart';
+// Importa o arquivo onde definimos a estrutura do banco e nossos métodos CRUD
 import '../database/app_database.dart';
 
 class AtualizarPage extends StatefulWidget {
@@ -8,43 +9,50 @@ class AtualizarPage extends StatefulWidget {
 }
 
 class _AtualizarPageState extends State<AtualizarPage> {
-  // Instancia o banco de dados
+  // Instancia a conexão com o banco de dados
   final db = AppDatabase();
-  // Controlador para gerenciar o texto que aparece dentro do campo (TextField)
+  
+  // O TextEditingController serve para "ler" o que o usuário digita e também para "escrever"
+  // texto dentro do campo programaticamente (usamos para carregar o nome atual do cliente).
   final _nomeController = TextEditingController();
   
-  // O símbolo '?' significa que esta variável pode ser nula (começa vazia)
-  // Usamos isso porque nenhum cliente está selecionado quando a tela abre
+  // Variável que guarda o objeto do cliente que clicamos na lista.
+  // O símbolo '?' indica que ela pode ser NULA (vazia), o que é verdade até o usuário clicar em alguém.
   Cliente? _clienteSelecionado;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Atualizar Cliente')),
+      // Usamos Column para colocar a lista em cima e o formulário de edição embaixo
       body: Column(
         children: [
-          // Expanded faz a lista ocupar todo o espaço disponível no topo
+          // Expanded: Faz a lista ocupar todo o espaço que sobrar na tela.
           Expanded(
             child: FutureBuilder<List<Cliente>>(
-              future: db.listarClientes(), // Busca a lista atualizada no SQLite
+              // Busca a lista de clientes para que o professor/aluno possa escolher quem editar
+              future: db.listarClientes(), 
               builder: (context, snapshot) {
-                // Enquanto o banco não responde, mostra o círculo de carregamento
+                // Enquanto o banco "pensa", mostramos a animação de carregamento
                 if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
                 
+                // 'snapshot.data!' -> O '!' força o Dart a aceitar que os dados existem.
+                // Usamos isso após o 'if' acima garantir que 'hasData' é verdadeiro.
+                final listaDeClientes = snapshot.data!;
+
                 return ListView.builder(
-                  // 'snapshot.data!' -> O '!' diz: "Dart, eu garanto que os dados chegaram, pode ler o tamanho da lista"
-                  itemCount: snapshot.data!.length,
+                  itemCount: listaDeClientes.length,
                   itemBuilder: (context, index) {
-                    // Pega o cliente específico da posição 'index'
-                    final c = snapshot.data![index];
+                    final c = listaDeClientes[index];
                     return ListTile(
-                      title: Text(c.nome), // Mostra o nome na lista
-                      trailing: Icon(Icons.edit), // Ícone de lápis à direita
+                      title: Text(c.nome), 
+                      subtitle: Text('CPF: ${c.cpf}'),
+                      trailing: Icon(Icons.edit, color: Colors.blue), // Ícone visual de edição
                       onTap: () {
-                        // setState avisa o Flutter para redesenhar a tela com novos dados
+                        // O 'setState' reconstrói a tela para mostrar o formulário de edição embaixo
                         setState(() {
-                          _clienteSelecionado = c; // Guarda o cliente clicado na variável
-                          _nomeController.text = c.nome; // Coloca o nome dele no campo de texto
+                          _clienteSelecionado = c; // "Este é o cliente que eu quero mudar"
+                          _nomeController.text = c.nome; // Já preenche o campo com o nome atual
                         });
                       },
                     );
@@ -54,50 +62,65 @@ class _AtualizarPageState extends State<AtualizarPage> {
             ),
           ),
           
-          // 'if' dentro da lista: O formulário só aparece se existir um cliente selecionado
+          // LÓGICA CONDICIONAL: O bloco abaixo só será "desenhado" se houver um cliente selecionado.
+          // Se '_clienteSelecionado' for nulo, o Flutter pula todo este bloco de código.
           if (_clienteSelecionado != null)
             Container(
               padding: EdgeInsets.all(20),
-              color: Colors.blue[50], // Fundo azul clarinho para destacar que é edição
+              // Decoração para destacar a área de edição da lista comum
+              decoration: BoxDecoration(
+                color: Colors.blue[50], // Fundo azul bem claro
+                border: Border(top: BorderSide(color: Colors.blue, width: 2)),
+              ),
               child: Column(
                 children: [
-                  // '_clienteSelecionado!' -> Como o 'if' acima já testou que não é nulo, 
-                  // usamos o '!' para acessar a propriedade '.nome' com segurança.
-                  Text('Editando: ${_clienteSelecionado!.nome}', 
-                       style: TextStyle(fontWeight: FontWeight.bold)),
+                  // O '!' aqui diz ao Dart: "Pode ler o .nome, eu já conferi que não é nulo no 'if' acima"
+                  Text('Editando Dados de: ${_clienteSelecionado!.nome}', 
+                       style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue[900])),
                   
+                  const SizedBox(height: 10),
+
                   TextField(
-                    controller: _nomeController, // O texto digitado fica guardado aqui
-                    decoration: InputDecoration(labelText: 'Novo Nome'),
+                    controller: _nomeController, 
+                    decoration: InputDecoration(
+                      labelText: 'Digite o novo nome',
+                      border: OutlineInputBorder(), // Dá um visual mais moderno ao campo
+                      fillColor: Colors.white,
+                      filled: true,
+                    ),
                   ),
-                  SizedBox(height: 10),
                   
-                  ElevatedButton(
+                  const SizedBox(height: 15),
+                  
+                  ElevatedButton.icon(
+                    icon: Icon(Icons.check),
+                    label: Text('CONFIRMAR ALTERAÇÃO'),
+                    style: ElevatedButton.styleFrom(minimumSize: Size(double.infinity, 50)),
                     onPressed: () async {
-                      // Criamos um novo objeto 'Cliente' com os dados atualizados
-                      // Mas mantemos o mesmo 'id' para o banco saber qual registro alterar
+                      // Criamos um novo objeto com os dados que o usuário alterou.
+                      // IMPORTANTE: Mantemos o ID original, senão o Drift não saberia qual linha atualizar.
                       final clienteAtualizado = Cliente(
-                        id: _clienteSelecionado!.id, // '!' garante que temos o ID do selecionado
-                        nome: _nomeController.text,  // Pega o que o usuário digitou agora
-                        cpf: _clienteSelecionado!.cpf,
-                        telefone: _clienteSelecionado!.telefone,
+                        id: _clienteSelecionado!.id, 
+                        nome: _nomeController.text,  // Pegamos o novo nome do controlador
+                        cpf: _clienteSelecionado!.cpf, // Mantemos o CPF antigo
+                        telefone: _clienteSelecionado!.telefone, // Mantemos o telefone antigo
                       );
 
-                      // Envia para o método 'replace' lá no AppDatabase
+                      // O método 'atualizarCliente' (replace) procura no SQLite o ID correspondente
+                      // e substitui todos os dados daquela linha pelos dados deste novo objeto.
                       await db.atualizarCliente(clienteAtualizado);
 
-                      // Após salvar, resetamos a tela
+                      // Limpamos tudo para o app voltar ao estado original (apenas a lista aparecendo)
                       setState(() {
-                        _clienteSelecionado = null; // Esconde o formulário de edição
-                        _nomeController.clear();    // Limpa o campo de texto
+                        _clienteSelecionado = null; 
+                        _nomeController.clear();
                       });
 
-                      // Feedback visual para o usuário
+                      // Mensagem de sucesso (Feedback para o aluno)
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Cliente atualizado com sucesso!')),
+                        SnackBar(content: Text('Nome atualizado com sucesso!'), backgroundColor: Colors.green),
                       );
                     },
-                    child: Text('Confirmar Alteração'),
                   )
                 ],
               ),
