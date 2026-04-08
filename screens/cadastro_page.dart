@@ -36,7 +36,7 @@ class _CadastroPageState extends State<CadastroPage> {
 
       // Barra superior da tela com título
       appBar: AppBar(
-        title: Text('Cadastrar Cliente'), // Título exibido no AppBar
+        title: Text('Gerenciamento de Clientes'), // Título atualizado para o sistema completo
       ),
 
       // Corpo principal da tela com rolagem para evitar problemas com teclado
@@ -53,10 +53,14 @@ class _CadastroPageState extends State<CadastroPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch, // Altera o alinhamento para esticar os botões na largura total
 
             children: [
+              // Título para a seção de entrada de dados
+              const Text('Novo Cadastro', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)), // Título da seção
+              const SizedBox(height: 10), // Espaçamento
+
               // Campo de entrada de texto para o nome do cliente
               TextFormField(
                 controller: _nomeController, // Liga ao controlador do nome
-                decoration: InputDecoration(labelText: 'Nome'), // Define rótulo
+                decoration: InputDecoration(labelText: 'Nome', border: OutlineInputBorder()), // Define rótulo e borda
                 validator: (value) {
                   // Função de validação: verifica se o campo está vazio
                   if (value == null || value.isEmpty) {
@@ -65,11 +69,12 @@ class _CadastroPageState extends State<CadastroPage> {
                   return null; // Tudo certo
                 },
               ),
+              const SizedBox(height: 10), // Espaço entre campos
 
               // Campo de entrada para CPF
               TextFormField(
                 controller: _cpfController, // Liga ao controlador do CPF
-                decoration: InputDecoration(labelText: 'CPF'), // Rótulo do campo
+                decoration: InputDecoration(labelText: 'CPF', border: OutlineInputBorder()), // Rótulo do campo e borda
                 keyboardType: TextInputType.number, // Define o teclado como numérico para facilitar o preenchimento
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -78,11 +83,12 @@ class _CadastroPageState extends State<CadastroPage> {
                   return null;
                 },
               ),
+              const SizedBox(height: 10), // Espaço entre campos
 
               // Campo de entrada para telefone
               TextFormField(
                 controller: _telefoneController, // Liga ao controlador do telefone
-                decoration: InputDecoration(labelText: 'Telefone'), // Rótulo
+                decoration: InputDecoration(labelText: 'Telefone', border: OutlineInputBorder()), // Rótulo e borda
                 keyboardType: TextInputType.phone, // Define o teclado para padrão de telefone
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -93,59 +99,83 @@ class _CadastroPageState extends State<CadastroPage> {
               ),
 
               // Espaçamento vertical entre os campos e o botão
-              const SizedBox(height: 30), // Aumentado o espaço para 30 pixels para melhor visualização
+              const SizedBox(height: 20), 
 
               // Botão de salvar cliente no banco
-              ElevatedButton(
-                // Define um estilo para o botão de salvar
+              ElevatedButton.icon(
+                icon: const Icon(Icons.save), // Adicionado ícone de salvar
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 15), // Adiciona preenchimento vertical interno no botão
+                  padding: const EdgeInsets.symmetric(vertical: 15), // Preenchimento vertical
                 ),
                 // Ação executada ao pressionar o botão
                 onPressed: () async {
-                  // Valida todos os campos do formulário
                   if (_formKey.currentState!.validate()) {
-                    // Cria um objeto do tipo ClientesCompanion com os valores digitados
                     final cliente = ClientesCompanion(
                       nome: drift.Value(_nomeController.text),         // Nome digitado
                       cpf: drift.Value(_cpfController.text),           // CPF digitado
                       telefone: drift.Value(_telefoneController.text), // Telefone digitado
                     );
 
-                    // Insere o cliente no banco de dados através do método definido no Drift
-                    await db.inserirCliente(cliente);
+                    await db.inserirCliente(cliente); // Insere no banco
 
-                    // Exibe uma mensagem de confirmação com SnackBar
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Cliente salvo com sucesso!')),
                     );
 
-                    // Limpa os campos após a inserção
-                    _nomeController.clear();
-                    _cpfController.clear();
-                    _telefoneController.clear();
+                    _nomeController.clear(); // Limpa campo
+                    _cpfController.clear();  // Limpa campo
+                    _telefoneController.clear(); // Limpa campo
                   }
                 },
-                // Texto exibido no botão
-                child: Text('SALVAR CLIENTE'), // Texto em caixa alta para destaque
+                label: Text('SALVAR CLIENTE'), // Texto do botão
               ),
 
-              // Espaço entre os dois botões
-              const SizedBox(height: 12), // Espaço de 12 pixels entre os botões principais
+              const SizedBox(height: 20), // Espaçamento para o menu de gerenciamento
+              const Divider(), // Linha horizontal para separar as seções
+              const SizedBox(height: 10), // Espaçamento
+              const Text('Menu de Gerenciamento', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)), // Título do menu
+              const SizedBox(height: 15), // Espaçamento
 
-              // Botão com borda para navegar até a tela de listagem de clientes (Substituindo o antigo TextButton)
-              OutlinedButton(
-                // Define um estilo para o botão de contorno
+              // Botão para navegar até a tela de listagem de clientes
+              OutlinedButton.icon(
+                icon: const Icon(Icons.list), // Ícone de lista
+                style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)), // Estilo do botão
+                onPressed: () {
+                  Navigator.pushNamed(context, '/listar'); // Navega para rota /listar
+                },
+                label: Text('VER LISTA DE CLIENTES'), // Texto do botão
+              ),
+
+              const SizedBox(height: 10), // Espaço entre botões
+
+              // Botão para navegar até a tela de ATUALIZAÇÃO (EDITAR)
+              OutlinedButton.icon(
+                icon: const Icon(Icons.edit, color: Colors.orange), // Ícone de editar em laranja
                 style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 15), // Adiciona preenchimento vertical interno
-                  side: BorderSide(color: Colors.blue), // Define a cor da borda do botão
+                  padding: const EdgeInsets.symmetric(vertical: 15), // Espaçamento interno
+                  foregroundColor: Colors.orange, // Cor do texto e ícone
+                  side: const BorderSide(color: Colors.orange), // Cor da borda
                 ),
                 onPressed: () {
-                  // Usa o Navigator para ir para a rota '/listar'
-                  Navigator.pushNamed(context, '/listar');
+                  Navigator.pushNamed(context, '/atualizar'); // Navega para rota /atualizar definida no main.dart
                 },
-                // Texto do botão de navegação agora dentro de um botão visível
-                child: Text('VER LISTA DE CLIENTES'), // Texto em destaque
+                label: const Text('EDITAR / ATUALIZAR CLIENTE'), // Texto do botão
+              ),
+
+              const SizedBox(height: 10), // Espaço entre botões
+
+              // Botão para navegar até a tela de EXCLUSÃO (DELETAR)
+              OutlinedButton.icon(
+                icon: const Icon(Icons.delete_forever, color: Colors.red), // Ícone de lixeira em vermelho
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 15), // Espaçamento interno
+                  foregroundColor: Colors.red, // Cor do texto e ícone
+                  side: const BorderSide(color: Colors.red), // Cor da borda
+                ),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/excluir'); // Navega para rota /excluir definida no main.dart
+                },
+                label: const Text('EXCLUIR CLIENTE'), // Texto do botão
               ),
             ],
           ),
